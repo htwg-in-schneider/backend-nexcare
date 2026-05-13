@@ -8,4 +8,12 @@ Backend für die Nexcare-Patientenverwaltung (Spring Boot 3.5 + Java 21).
 mvn spring-boot:run
 ```
 
-Die Anwendung startet auf `http://localhost:8081` (Port wird in Iteration 1a gesetzt).
+Die Anwendung startet auf `http://localhost:8081`.
+
+## Iterations
+
+### Iteration 1a: First REST Controller
+
+- Basic Projekt-Konfiguration in `application.properties` (Port 8081, hübsche JSON-Ausgabe, DataSource-Autoconfig deaktiviert solange keine DB benötigt wird).
+- `PatientController` mit GET `/api/patient`, der eine Liste von Strings (Patientennamen) zurückgibt.
+- Test mit `curl http://localhost:8081/api/patient`.
