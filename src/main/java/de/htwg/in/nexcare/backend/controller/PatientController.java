@@ -3,12 +3,17 @@ package de.htwg.in.nexcare.backend.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.htwg.in.nexcare.backend.model.Patient;
+import de.htwg.in.nexcare.backend.model.PatientStatus;
 import de.htwg.in.nexcare.backend.repository.PatientRepository;
 
+import jakarta.persistence.criteria.Predicate;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,8 +27,34 @@ public class PatientController {
     private PatientRepository patientRepository;
 
     @GetMapping
-    public List<Patient> getPatients() {
-        return patientRepository.findAll();
+    public List<Patient> getPatients(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) PatientStatus status,
+            @RequestParam(required = false) Long klinikum) {
+
+        if (name == null && status == null && klinikum == null) {
+            return patientRepository.findAll();
+        }
+
+        Specification<Patient> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (name != null && !name.isBlank()) {
+                String like = "%" + name.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("vorname")), like),
+                        cb.like(cb.lower(root.get("nachname")), like),
+                        cb.like(cb.lower(root.get("versicherungsnr")), like)
+                ));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (klinikum != null) {
+                predicates.add(cb.equal(root.get("klinikum").get("id"), klinikum));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return patientRepository.findAll(spec);
     }
 
     @GetMapping("/{id}")

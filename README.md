@@ -86,3 +86,16 @@ Keine Validierung — Eingaben werden ohne Prüfung gespeichert (wie im saitenwe
 - `KlinikumController` mit `GET /api/klinikum` (Liste) und `GET /api/klinikum/{id}` (Detail, 404 falls nicht vorhanden).
 - `DataLoader` legt jetzt zuerst drei Klinika an (`Klinikum Konstanz`, `Klinikum Singen`, `Universitätsklinikum Freiburg`) und referenziert sie in den Patienten (4× Konstanz, 1× Singen für etwas Filter-Variety).
 - Im JSON enthält `Patient.klinikum` nun ein eingebettetes Klinikum-Objekt `{ id, name, ort }` statt einem String. Hinweis fürs Frontend (Iter 11): Klinikum-Name kommt jetzt aus `patient.klinikum.name`.
+
+### Iteration 6: Search and filter patients
+
+- `PatientController#getPatients` akzeptiert jetzt drei optionale Query-Parameter:
+  - `name` — Substring-Match (case-insensitive) auf `vorname`, `nachname` oder `versicherungsnr`.
+  - `status` — `STATIONAER` oder `AMBULANT`.
+  - `klinikum` — id eines `Klinikum`-Datensatzes.
+- Die Parameter werden kombiniert mit `AND` als JPA `Specification` (alle nicht-null-Parameter werden als Predicates angehängt). `PatientRepository` extendet zusätzlich `JpaSpecificationExecutor<Patient>`.
+- Beispiele:
+  - `curl 'http://localhost:8081/api/patient?name=schmidt'`
+  - `curl 'http://localhost:8081/api/patient?status=STATIONAER'`
+  - `curl 'http://localhost:8081/api/patient?klinikum=1'`
+  - `curl 'http://localhost:8081/api/patient?name=mar&status=STATIONAER&klinikum=1'`
