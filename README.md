@@ -33,3 +33,8 @@ Die Anwendung startet auf `http://localhost:8081`.
   - `NotfallKontakt` (POJO mit name, beziehung, telefon — eingebettet in Patient).
 - `PatientController` liefert jetzt 5 voll befüllte `Patient`-Beispiele, die vom Frontend konsumiert werden können.
 - POST nimmt ein vollständiges `Patient`-Objekt entgegen.
+
+### Iteration 2: CORS Configuration
+
+- `config/WebConfig` mit globalem CORS-Mapping (`addCorsMappings`) — erlaubt alle Origins/Methoden/Header.
+- Damit kann das Vue-Frontend (typisch auf `http://localhost:5173`) das Backend (`:8081`) ohne CORS-Fehler ansprechen.
