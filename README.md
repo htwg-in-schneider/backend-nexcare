@@ -24,3 +24,12 @@ Die Anwendung startet auf `http://localhost:8081`.
 - Verwendung von Java-Objekten (innere POJO-Klasse `Patient` mit `vorname`/`nachname`) statt Strings.
 - Test GET: `curl http://localhost:8081/api/patient`
 - Test POST: `curl -X POST http://localhost:8081/api/patient -H 'Content-Type: application/json' -d '{"vorname":"Maxi","nachname":"Muster"}'`
+
+### Iteration 1c: REST-Controller with model class
+
+- Model-Klassen in `model/`:
+  - `Patient` (POJO, alle Felder aus dem Mockup: id, vorname, nachname, geburtsdatum, versicherungsnr, telefon, email, adresse, klinikum, etage, abteilung, station, zimmer, bett, status, notfallkontakt).
+  - `PatientStatus` (Enum: `STATIONAER`, `AMBULANT`).
+  - `NotfallKontakt` (POJO mit name, beziehung, telefon — eingebettet in Patient).
+- `PatientController` liefert jetzt 5 voll befüllte `Patient`-Beispiele, die vom Frontend konsumiert werden können.
+- POST nimmt ein vollständiges `Patient`-Objekt entgegen.
