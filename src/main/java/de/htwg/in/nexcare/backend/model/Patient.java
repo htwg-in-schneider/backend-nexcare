@@ -1,9 +1,25 @@
 package de.htwg.in.nexcare.backend.model;
 
-import java.time.LocalDate;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
+import java.time.LocalDate;
+import java.util.Objects;
+
+@Entity
 public class Patient {
-    private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
     private String vorname;
     private String nachname;
     private LocalDate geburtsdatum;
@@ -17,11 +33,20 @@ public class Patient {
     private String station;
     private String zimmer;
     private String bett;
+
+    @Enumerated(EnumType.STRING)
     private PatientStatus status;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "name",      column = @Column(name = "notfall_name")),
+        @AttributeOverride(name = "beziehung", column = @Column(name = "notfall_beziehung")),
+        @AttributeOverride(name = "telefon",   column = @Column(name = "notfall_telefon"))
+    })
     private NotfallKontakt notfallkontakt;
 
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getVorname() { return vorname; }
     public void setVorname(String vorname) { this.vorname = vorname; }
@@ -67,6 +92,19 @@ public class Patient {
 
     public NotfallKontakt getNotfallkontakt() { return notfallkontakt; }
     public void setNotfallkontakt(NotfallKontakt notfallkontakt) { this.notfallkontakt = notfallkontakt; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Patient that = (Patient) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 
     @Override
     public String toString() {

@@ -1,5 +1,8 @@
 package de.htwg.in.nexcare.backend.model;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public class NotfallKontakt {
     private String name;
     private String beziehung;
