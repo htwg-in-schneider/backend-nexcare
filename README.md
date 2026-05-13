@@ -52,10 +52,11 @@ Connection-Details siehe `src/main/resources/application-test.properties` bzw. `
 1. **DB-Konfiguration**:
    - H2 (file-based) und MariaDB Runtime-Dependencies in `pom.xml`.
    - `application.properties` mit H2-Konfiguration (`jdbc:h2:file:./target/nexcare-db`) und kommentiertem MariaDB-Block für Produktion.
+   - `application-test.properties` und `application-prod.properties` mit den HTWG-MariaDB-Connections (Passwort via Env-Var).
    - `spring.jpa.hibernate.ddl-auto=update`.
    - Die in Iter 1a gesetzte DataSource-Autoconfig-Exclusion wurde entfernt, da jetzt eine DB benötigt wird.
 2. **JPA-Entities**:
-   - `Patient` mit `@Entity`, `@Id @GeneratedValue`, `@Enumerated(EnumType.STRING)` für `status`, `@Embedded` für `notfallkontakt`. Plus `equals`/`hashCode` auf Basis von `id`.
+   - `Patient` mit `@Entity`, `@Id @GeneratedValue`, `@Enumerated(EnumType.STRING)` für `status`, `@Embedded` + `@AttributeOverrides` für `notfallkontakt`. Plus `equals`/`hashCode` auf Basis von `id`.
    - `NotfallKontakt` mit `@Embeddable` — die Felder werden in dieselbe Tabelle wie `Patient` geschrieben.
 3. **Repository**:
    - `PatientRepository extends JpaRepository<Patient, Long>`.
@@ -63,3 +64,14 @@ Connection-Details siehe `src/main/resources/application-test.properties` bzw. `
    - `config/DataLoader` als `CommandLineRunner` — lädt 5 Beispielpatienten beim Startup, falls die DB leer ist.
 5. **Controller**:
    - `PatientController` verwendet jetzt das Repository für `findAll()`. POST ist weiter nur ein Stub — echtes CRUD kommt in Iteration 4.
+
+### Iteration 4: CRUD for Patients
+
+REST-Endpoints:
+- `GET /api/patient` — Liste aller Patienten
+- `GET /api/patient/{id}` — einzelner Patient (404 falls nicht vorhanden)
+- `POST /api/patient` — neuen Patient anlegen (eingehende `id` wird auf null gesetzt, damit ein neuer Datensatz entsteht); gibt das gespeicherte Objekt mit generierter id zurück
+- `PUT /api/patient/{id}` — vorhandenen Patient aktualisieren (404 falls nicht vorhanden)
+- `DELETE /api/patient/{id}` — löschen (204 bei Erfolg, 404 falls nicht vorhanden)
+
+Keine Validierung — Eingaben werden ohne Prüfung gespeichert (wie im saitenweise-Pattern).
