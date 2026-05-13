@@ -1,5 +1,7 @@
 package de.htwg.in.nexcare.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
@@ -10,11 +12,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Patient {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,7 +32,11 @@ public class Patient {
     private String telefon;
     private String email;
     private String adresse;
-    private String klinikum;
+
+    @ManyToOne
+    @JoinColumn(name = "klinikum_id")
+    private Klinikum klinikum;
+
     private String etage;
     private String abteilung;
     private String station;
@@ -69,8 +78,8 @@ public class Patient {
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
 
-    public String getKlinikum() { return klinikum; }
-    public void setKlinikum(String klinikum) { this.klinikum = klinikum; }
+    public Klinikum getKlinikum() { return klinikum; }
+    public void setKlinikum(Klinikum klinikum) { this.klinikum = klinikum; }
 
     public String getEtage() { return etage; }
     public void setEtage(String etage) { this.etage = etage; }

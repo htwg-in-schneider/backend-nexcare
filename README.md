@@ -75,3 +75,14 @@ REST-Endpoints:
 - `DELETE /api/patient/{id}` — löschen (204 bei Erfolg, 404 falls nicht vorhanden)
 
 Keine Validierung — Eingaben werden ohne Prüfung gespeichert (wie im saitenweise-Pattern).
+
+### Iteration 5: Added 1:n relation Klinikum - Patient
+
+- Neue Entität `Klinikum` (id, name, ort) mit bidirektionaler Beziehung zu `Patient`:
+  - `Klinikum.patienten` als `@OneToMany(mappedBy="klinikum")` mit `@JsonIgnore` (sonst entsteht eine Endlos-Rekursion bei der JSON-Serialisierung).
+  - `Patient.klinikum` als `@ManyToOne` mit `@JoinColumn(name="klinikum_id")` — ersetzt das bisherige `String klinikum`-Feld.
+- `@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})` auf beiden Entities, um Probleme bei der JSON-Serialisierung von JPA-Proxies zu vermeiden.
+- `KlinikumRepository extends JpaRepository<Klinikum, Long>`.
+- `KlinikumController` mit `GET /api/klinikum` (Liste) und `GET /api/klinikum/{id}` (Detail, 404 falls nicht vorhanden).
+- `DataLoader` legt jetzt zuerst drei Klinika an (`Klinikum Konstanz`, `Klinikum Singen`, `Universitätsklinikum Freiburg`) und referenziert sie in den Patienten (4× Konstanz, 1× Singen für etwas Filter-Variety).
+- Im JSON enthält `Patient.klinikum` nun ein eingebettetes Klinikum-Objekt `{ id, name, ort }` statt einem String. Hinweis fürs Frontend (Iter 11): Klinikum-Name kommt jetzt aus `patient.klinikum.name`.
