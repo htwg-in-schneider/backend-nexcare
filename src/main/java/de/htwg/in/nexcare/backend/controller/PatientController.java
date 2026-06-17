@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import de.htwg.in.nexcare.backend.model.Patient;
 import de.htwg.in.nexcare.backend.model.PatientStatus;
@@ -64,7 +65,7 @@ public class PatientController {
     }
 
     @PostMapping
-    public Patient createPatient(@RequestBody Patient patient) {
+    public Patient createPatient(@Valid @RequestBody Patient patient) {
         if (patient.getId() != null) {
             patient.setId(null);
             LOG.warn("Attempted to create a patient with an existing ID. ID has been reset to null.");
@@ -75,7 +76,7 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Patient> updatePatient(@PathVariable Long id, @RequestBody Patient details) {
+    public ResponseEntity<Patient> updatePatient(@PathVariable Long id, @Valid @RequestBody Patient details) {
         Optional<Patient> opt = patientRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();

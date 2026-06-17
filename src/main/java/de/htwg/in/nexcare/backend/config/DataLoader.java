@@ -6,10 +6,13 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import de.htwg.in.nexcare.backend.model.AppUser;
 import de.htwg.in.nexcare.backend.model.Klinikum;
 import de.htwg.in.nexcare.backend.model.NotfallKontakt;
 import de.htwg.in.nexcare.backend.model.Patient;
 import de.htwg.in.nexcare.backend.model.PatientStatus;
+import de.htwg.in.nexcare.backend.model.Role;
+import de.htwg.in.nexcare.backend.repository.AppUserRepository;
 import de.htwg.in.nexcare.backend.repository.KlinikumRepository;
 import de.htwg.in.nexcare.backend.repository.PatientRepository;
 
@@ -22,9 +25,11 @@ public class DataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
 
     @Bean
-    public CommandLineRunner loadData(KlinikumRepository klinikumRepository,
+    public CommandLineRunner loadData(AppUserRepository userRepository,
+                                      KlinikumRepository klinikumRepository,
                                       PatientRepository patientRepository) {
         return args -> {
+            loadInitialUsers(userRepository);
             if (klinikumRepository.count() == 0) {
                 LOGGER.info("Database is empty. Loading initial data...");
                 loadInitialData(klinikumRepository, patientRepository);
@@ -32,6 +37,33 @@ public class DataLoader {
                 LOGGER.info("Database already contains data. Skipping data loading.");
             }
         };
+    }
+
+    private void loadInitialUsers(AppUserRepository userRepository) {
+        // Auth0 IDs are set via env variables; defaults allow local dev without auth
+        upsertUser(userRepository, "Max Mustermann", "user@nexcare.de",
+                System.getenv().getOrDefault("NEXCARE_USER_OAUTH_ID", "auth0|nexcare-user"), Role.REGULAR);
+        upsertUser(userRepository, "Admin NexCare", "admin@nexcare.de",
+                System.getenv().getOrDefault("NEXCARE_ADMIN_OAUTH_ID", "auth0|nexcare-admin"), Role.ADMIN);
+    }
+
+    private void upsertUser(AppUserRepository userRepository, String name, String email,
+                             String oauthId, Role role) {
+        userRepository.findByEmail(email).ifPresentOrElse(existing -> {
+            existing.setName(name);
+            existing.setOauthId(oauthId);
+            existing.setRole(role);
+            userRepository.save(existing);
+            LOGGER.info("Updated {} user: {}", role, email);
+        }, () -> {
+            AppUser u = new AppUser();
+            u.setName(name);
+            u.setEmail(email);
+            u.setOauthId(oauthId);
+            u.setRole(role);
+            userRepository.save(u);
+            LOGGER.info("Created {} user: {}", role, email);
+        });
     }
 
     private void loadInitialData(KlinikumRepository klinikumRepository,

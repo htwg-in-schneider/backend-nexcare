@@ -2,6 +2,9 @@ package de.htwg.in.nexcare.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
@@ -25,12 +28,23 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @NotBlank(message = "Vorname ist erforderlich")
     private String vorname;
+
+    @NotBlank(message = "Nachname ist erforderlich")
     private String nachname;
+
+    @NotNull(message = "Geburtsdatum ist erforderlich")
     private LocalDate geburtsdatum;
+
+    @NotBlank(message = "Versicherungsnummer ist erforderlich")
     private String versicherungsnr;
+
     private String telefon;
+
+    @Email(message = "Ungültige E-Mail-Adresse")
     private String email;
+
     private String adresse;
 
     @ManyToOne

@@ -3,6 +3,7 @@ package de.htwg.in.nexcare.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,7 +21,10 @@ public class Klinikum {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @NotBlank(message = "Name ist erforderlich")
     private String name;
+
+    @NotBlank(message = "Ort ist erforderlich")
     private String ort;
 
     @OneToMany(mappedBy = "klinikum")
