@@ -41,8 +41,12 @@ public class DataLoader {
 
     private void loadInitialUsers(AppUserRepository userRepository) {
         // Auth0 IDs are set via env variables; defaults allow local dev without auth
-        upsertUser(userRepository, "Max Mustermann", "user@nexcare.de",
-                System.getenv().getOrDefault("NEXCARE_USER_OAUTH_ID", "auth0|nexcare-user"), Role.REGULAR);
+        upsertUser(userRepository, "Anna Patient", "patient@nexcare.de",
+                System.getenv().getOrDefault("NEXCARE_PATIENT_OAUTH_ID", "auth0|nexcare-patient"), Role.PATIENT);
+        upsertUser(userRepository, "Sandra Pflege", "pflege@nexcare.de",
+                System.getenv().getOrDefault("NEXCARE_NURSE_OAUTH_ID", "auth0|nexcare-nurse"), Role.KRANKENSCHWESTER);
+        upsertUser(userRepository, "Dr. Max Arzt", "arzt@nexcare.de",
+                System.getenv().getOrDefault("NEXCARE_ARZT_OAUTH_ID", "auth0|nexcare-arzt"), Role.ARZT);
         upsertUser(userRepository, "Admin NexCare", "admin@nexcare.de",
                 System.getenv().getOrDefault("NEXCARE_ADMIN_OAUTH_ID", "auth0|nexcare-admin"), Role.ADMIN);
     }
