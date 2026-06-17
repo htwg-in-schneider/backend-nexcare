@@ -8,12 +8,14 @@ import org.springframework.context.annotation.Configuration;
 
 import de.htwg.in.nexcare.backend.model.AppUser;
 import de.htwg.in.nexcare.backend.model.Klinikum;
+import de.htwg.in.nexcare.backend.model.Medikament;
 import de.htwg.in.nexcare.backend.model.NotfallKontakt;
 import de.htwg.in.nexcare.backend.model.Patient;
 import de.htwg.in.nexcare.backend.model.PatientStatus;
 import de.htwg.in.nexcare.backend.model.Role;
 import de.htwg.in.nexcare.backend.repository.AppUserRepository;
 import de.htwg.in.nexcare.backend.repository.KlinikumRepository;
+import de.htwg.in.nexcare.backend.repository.MedikamentRepository;
 import de.htwg.in.nexcare.backend.repository.PatientRepository;
 
 import java.time.LocalDate;
@@ -27,7 +29,8 @@ public class DataLoader {
     @Bean
     public CommandLineRunner loadData(AppUserRepository userRepository,
                                       KlinikumRepository klinikumRepository,
-                                      PatientRepository patientRepository) {
+                                      PatientRepository patientRepository,
+                                      MedikamentRepository medikamentRepository) {
         return args -> {
             loadInitialUsers(userRepository);
             if (klinikumRepository.count() == 0) {
@@ -35,6 +38,9 @@ public class DataLoader {
                 loadInitialData(klinikumRepository, patientRepository);
             } else {
                 LOGGER.info("Database already contains data. Skipping data loading.");
+            }
+            if (medikamentRepository.count() == 0) {
+                loadInitialMedikamente(medikamentRepository);
             }
         };
     }
@@ -109,6 +115,27 @@ public class DataLoader {
         patientRepository.saveAll(Arrays.asList(maria, thomas, anna, peter, lisa));
         LOGGER.info("Initial Klinika ({}) and patients ({}) loaded successfully.",
                 klinikumRepository.count(), patientRepository.count());
+    }
+
+    private void loadInitialMedikamente(MedikamentRepository repo) {
+        repo.save(medikament("Ibuprofen 400mg", "Ibuprofen", "Entzündungshemmer und Schmerzmittel", "mg"));
+        repo.save(medikament("Paracetamol 500mg", "Paracetamol", "Fiebersenkend und schmerzlindernd", "mg"));
+        repo.save(medikament("Marcumar", "Phenprocoumon", "Antikoagulans zur Thromboseprophylaxe", "mg"));
+        repo.save(medikament("Ramipril 5mg", "Ramipril", "ACE-Hemmer bei Bluthochdruck", "mg"));
+        repo.save(medikament("Metformin 850mg", "Metformin", "Blutzucker senkend bei Typ-2-Diabetes", "mg"));
+        repo.save(medikament("Amoxicillin 500mg", "Amoxicillin", "Breitspektrum-Antibiotikum", "mg"));
+        repo.save(medikament("Omeprazol 20mg", "Omeprazol", "Protonenpumpenhemmer bei Sodbrennen", "mg"));
+        repo.save(medikament("Simvastatin 20mg", "Simvastatin", "Cholesterinsenker", "mg"));
+        LOGGER.info("Loaded {} Medikamente.", repo.count());
+    }
+
+    private static Medikament medikament(String name, String wirkstoff, String beschreibung, String einheit) {
+        Medikament m = new Medikament();
+        m.setName(name);
+        m.setWirkstoff(wirkstoff);
+        m.setBeschreibung(beschreibung);
+        m.setDosiereinheit(einheit);
+        return m;
     }
 
     private static Patient build(String vorname, String nachname, LocalDate geb, String vNr,

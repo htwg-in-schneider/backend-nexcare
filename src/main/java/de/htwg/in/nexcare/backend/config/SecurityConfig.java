@@ -26,6 +26,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/patient").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/patient/*").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/patient/*").authenticated()
+                        // medikament catalog: public reads, admin writes
+                        .requestMatchers(HttpMethod.GET, "/api/medikament", "/api/medikament/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/medikament").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/medikament/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/medikament/*").authenticated()
+                        // medikamentenplan: authenticated
+                        .requestMatchers("/api/patient/*/medikamentenplan/**").authenticated()
+                        // betten: authenticated
+                        .requestMatchers("/api/betten/**").authenticated()
                         // admin area
                         .requestMatchers("/api/admin/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/klinikum").authenticated()
