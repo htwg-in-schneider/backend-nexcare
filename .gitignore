@@ -34,3 +34,7 @@ build/
 
 ### Mac ###
 .DS_Store
+
+### Local env and workspace files ###
+.env.local
+workspace.yml
