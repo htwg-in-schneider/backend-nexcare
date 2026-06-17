@@ -33,7 +33,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/medikament/*").authenticated()
                         // medikamentenplan: authenticated
                         .requestMatchers("/api/patient/*/medikamentenplan/**").authenticated()
-                        // betten: authenticated
+                        // betten struktur + zuweisung: authenticated
+                        .requestMatchers(HttpMethod.GET, "/api/betten/struktur").authenticated()
                         .requestMatchers("/api/betten/**").authenticated()
                         // admin area
                         .requestMatchers("/api/admin/**").authenticated()

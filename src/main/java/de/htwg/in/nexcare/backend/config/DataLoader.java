@@ -6,17 +6,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import de.htwg.in.nexcare.backend.model.AppUser;
-import de.htwg.in.nexcare.backend.model.Klinikum;
-import de.htwg.in.nexcare.backend.model.Medikament;
-import de.htwg.in.nexcare.backend.model.NotfallKontakt;
-import de.htwg.in.nexcare.backend.model.Patient;
-import de.htwg.in.nexcare.backend.model.PatientStatus;
-import de.htwg.in.nexcare.backend.model.Role;
-import de.htwg.in.nexcare.backend.repository.AppUserRepository;
-import de.htwg.in.nexcare.backend.repository.KlinikumRepository;
-import de.htwg.in.nexcare.backend.repository.MedikamentRepository;
-import de.htwg.in.nexcare.backend.repository.PatientRepository;
+import de.htwg.in.nexcare.backend.model.*;
+import de.htwg.in.nexcare.backend.repository.*;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -30,12 +21,16 @@ public class DataLoader {
     public CommandLineRunner loadData(AppUserRepository userRepository,
                                       KlinikumRepository klinikumRepository,
                                       PatientRepository patientRepository,
-                                      MedikamentRepository medikamentRepository) {
+                                      MedikamentRepository medikamentRepository,
+                                      EtageRepository etageRepository,
+                                      ZimmerRepository zimmerRepository,
+                                      BettRepository bettRepository) {
         return args -> {
             loadInitialUsers(userRepository);
             if (klinikumRepository.count() == 0) {
                 LOGGER.info("Database is empty. Loading initial data...");
-                loadInitialData(klinikumRepository, patientRepository);
+                Klinikum[] klinika = loadInitialData(klinikumRepository, patientRepository);
+                loadInitialBettStruktur(klinika[0], patientRepository, etageRepository, zimmerRepository, bettRepository);
             } else {
                 LOGGER.info("Database already contains data. Skipping data loading.");
             }
@@ -76,8 +71,8 @@ public class DataLoader {
         });
     }
 
-    private void loadInitialData(KlinikumRepository klinikumRepository,
-                                 PatientRepository patientRepository) {
+    private Klinikum[] loadInitialData(KlinikumRepository klinikumRepository,
+                                       PatientRepository patientRepository) {
         Klinikum konstanz = klinikumRepository.save(new Klinikum("Klinikum Konstanz", "Konstanz"));
         Klinikum singen   = klinikumRepository.save(new Klinikum("Klinikum Singen", "Singen"));
         klinikumRepository.save(new Klinikum("Universitätsklinikum Freiburg", "Freiburg"));
@@ -115,6 +110,78 @@ public class DataLoader {
         patientRepository.saveAll(Arrays.asList(maria, thomas, anna, peter, lisa));
         LOGGER.info("Initial Klinika ({}) and patients ({}) loaded successfully.",
                 klinikumRepository.count(), patientRepository.count());
+        return new Klinikum[]{ konstanz, singen };
+    }
+
+    private void loadInitialBettStruktur(Klinikum konstanz, PatientRepository patientRepo,
+                                         EtageRepository etageRepo, ZimmerRepository zimmerRepo,
+                                         BettRepository bettRepo) {
+        // EG
+        Etage eg = etageRepo.save(new Etage(0, "EG", konstanz));
+        Zimmer z101 = zimmerRepo.save(new Zimmer("101", "Neurologie", "Station N1", eg));
+        bettRepo.save(new Bett("Bett A", z101));
+        bettRepo.save(new Bett("Bett B", z101));
+        bettRepo.save(new Bett("Bett C", z101));
+        Zimmer z102 = zimmerRepo.save(new Zimmer("102", "Neurologie", "Station N1", eg));
+        bettRepo.save(new Bett("Bett A", z102));
+        bettRepo.save(new Bett("Bett B", z102));
+
+        // 2. OG – Thomas Weber in 212 Bett B
+        Etage og2 = etageRepo.save(new Etage(2, "2. OG", konstanz));
+        Zimmer z211 = zimmerRepo.save(new Zimmer("211", "Innere Medizin", "Station I2", og2));
+        bettRepo.save(new Bett("Bett A", z211));
+        bettRepo.save(new Bett("Bett B", z211));
+        Zimmer z212 = zimmerRepo.save(new Zimmer("212", "Innere Medizin", "Station I2", og2));
+        bettRepo.save(new Bett("Bett A", z212));
+        Bett z212BettB = bettRepo.save(new Bett("Bett B", z212));
+        bettRepo.save(new Bett("Bett C", z212));
+
+        // Assign Thomas Weber to z212 Bett B
+        patientRepo.findAll().stream()
+            .filter(p -> "Thomas".equals(p.getVorname()) && "Weber".equals(p.getNachname()))
+            .findFirst().ifPresent(thomas -> {
+                z212BettB.setPatient(thomas);
+                z212BettB.setStatus(BettStatus.BELEGT);
+                bettRepo.save(z212BettB);
+            });
+
+        // 3. OG – Maria Schmidt in 304 Bett A
+        Etage og3 = etageRepo.save(new Etage(3, "3. OG", konstanz));
+        Zimmer z301 = zimmerRepo.save(new Zimmer("301", "Kardiologie", "Station K3", og3));
+        bettRepo.save(new Bett("Bett A", z301));
+        bettRepo.save(new Bett("Bett B", z301));
+        bettRepo.save(new Bett("Bett C", z301));
+        Zimmer z304 = zimmerRepo.save(new Zimmer("304", "Kardiologie", "Station K3", og3));
+        Bett z304BettA = bettRepo.save(new Bett("Bett A", z304));
+        bettRepo.save(new Bett("Bett B", z304));
+
+        patientRepo.findAll().stream()
+            .filter(p -> "Maria".equals(p.getVorname()) && "Schmidt".equals(p.getNachname()))
+            .findFirst().ifPresent(maria -> {
+                z304BettA.setPatient(maria);
+                z304BettA.setStatus(BettStatus.BELEGT);
+                bettRepo.save(z304BettA);
+            });
+
+        // 4. OG – Peter Braun in 418 Bett A
+        Etage og4 = etageRepo.save(new Etage(4, "4. OG", konstanz));
+        Zimmer z418 = zimmerRepo.save(new Zimmer("418", "Chirurgie", "Station C4", og4));
+        Bett z418BettA = bettRepo.save(new Bett("Bett A", z418));
+        bettRepo.save(new Bett("Bett B", z418));
+        bettRepo.save(new Bett("Bett C", z418));
+        Zimmer z419 = zimmerRepo.save(new Zimmer("419", "Chirurgie", "Station C4", og4));
+        bettRepo.save(new Bett("Bett A", z419));
+        bettRepo.save(new Bett("Bett B", z419));
+
+        patientRepo.findAll().stream()
+            .filter(p -> "Peter".equals(p.getVorname()) && "Braun".equals(p.getNachname()))
+            .findFirst().ifPresent(peter -> {
+                z418BettA.setPatient(peter);
+                z418BettA.setStatus(BettStatus.BELEGT);
+                bettRepo.save(z418BettA);
+            });
+
+        LOGGER.info("Initial Bettstruktur for Klinikum Konstanz loaded.");
     }
 
     private void loadInitialMedikamente(MedikamentRepository repo) {
