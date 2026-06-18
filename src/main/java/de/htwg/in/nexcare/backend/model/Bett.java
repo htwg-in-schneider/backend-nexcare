@@ -2,6 +2,9 @@ package de.htwg.in.nexcare.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -11,6 +14,8 @@ public class Bett {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @NotBlank(message = "Bezeichnung ist erforderlich")
+    @Size(max = 50, message = "Bezeichnung darf maximal 50 Zeichen haben")
     private String bezeichnung;
 
     @Enumerated(EnumType.STRING)
@@ -18,6 +23,7 @@ public class Bett {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "zimmer_id")
+    @NotNull(message = "Zimmer ist erforderlich")
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Zimmer zimmer;
 

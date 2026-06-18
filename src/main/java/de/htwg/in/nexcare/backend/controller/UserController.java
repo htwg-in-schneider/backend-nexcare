@@ -61,6 +61,7 @@ public class UserController {
             if (details.getRole() != null) {
                 user.setRole(details.getRole());
             }
+            user.setPatientId(details.getPatientId());
             AppUser saved = userRepository.save(user);
             LOG.info("Admin updated user id={}", id);
             return ResponseEntity.ok(saved);

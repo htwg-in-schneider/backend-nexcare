@@ -1,7 +1,9 @@
 package de.htwg.in.nexcare.backend.controller;
 
 import de.htwg.in.nexcare.backend.model.AppUser;
+import de.htwg.in.nexcare.backend.model.Patient;
 import de.htwg.in.nexcare.backend.repository.AppUserRepository;
+import de.htwg.in.nexcare.backend.repository.PatientRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +19,24 @@ public class ProfileController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProfileController.class);
 
-    @Autowired
-    private AppUserRepository userRepository;
+    @Autowired private AppUserRepository userRepository;
+    @Autowired private PatientRepository patientRepository;
 
     @GetMapping
     public ResponseEntity<AppUser> getProfile(@AuthenticationPrincipal Jwt jwt) {
         String oauthId = jwt.getSubject();
-        LOG.info("getProfile for sub={}", oauthId);
         return userRepository.findByOauthId(oauthId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /** Returns the Patient record linked to the logged-in PATIENT user. */
+    @GetMapping("/mein-patient")
+    public ResponseEntity<Patient> getMeinPatient(@AuthenticationPrincipal Jwt jwt) {
+        String oauthId = jwt.getSubject();
+        return userRepository.findByOauthId(oauthId)
+                .filter(u -> u.getPatientId() != null)
+                .flatMap(u -> patientRepository.findById(u.getPatientId()))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -38,6 +50,7 @@ public class ProfileController {
                 user.setName(details.getName());
             }
             user.setAdresse(details.getAdresse());
+            user.setKontaktEmail(details.getKontaktEmail());
             AppUser saved = userRepository.save(user);
             LOG.info("Updated profile for sub={}", oauthId);
             return ResponseEntity.ok(saved);

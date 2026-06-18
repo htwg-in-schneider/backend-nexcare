@@ -8,7 +8,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
-/** Configures Spring Security: public read access, authenticated writes, admin-only admin area. */
+/**
+ * Security configuration.
+ *
+ * Schutzziele:
+ *   Authentizität   – JWT via Auth0 (OAuth2 Resource Server)
+ *   Vertraulichkeit – Patientendaten nur für authentifizierte Nutzer; Rollen-Checks in Controllern
+ *   Integrität      – Bean Validation (@Valid) auf allen Entitäten; HTTPS via HSTS
+ *   Verfügbarkeit   – keine destruktiven öffentlichen Endpunkte
+ */
 @Configuration
 public class SecurityConfig {
 
@@ -16,32 +24,26 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(withDefaults())
+                .headers(headers -> headers
+                    .contentTypeOptions(withDefaults())
+                    .frameOptions(frame -> frame.deny())
+                    .httpStrictTransportSecurity(hsts -> hsts
+                        .includeSubDomains(true)
+                        .maxAgeInSeconds(31536000))
+                )
                 .authorizeHttpRequests(authorize -> authorize
-                        // public read
-                        .requestMatchers(HttpMethod.GET, "/api/patient", "/api/patient/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/klinikum", "/api/klinikum/*").permitAll()
-                        // user profile
-                        .requestMatchers("/api/profile").authenticated()
-                        // patient writes require login
-                        .requestMatchers(HttpMethod.POST, "/api/patient").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/patient/*").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/patient/*").authenticated()
-                        // medikament catalog: public reads, admin writes
-                        .requestMatchers(HttpMethod.GET, "/api/medikament", "/api/medikament/*").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/medikament").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/medikament/*").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/medikament/*").authenticated()
-                        // medikamentenplan: authenticated
-                        .requestMatchers("/api/patient/*/medikamentenplan/**").authenticated()
-                        // betten struktur + zuweisung: authenticated
-                        .requestMatchers(HttpMethod.GET, "/api/betten/struktur").authenticated()
-                        .requestMatchers("/api/betten/**").authenticated()
-                        // admin area
-                        .requestMatchers("/api/admin/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/klinikum").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/klinikum/*").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/klinikum/*").authenticated()
-                        .anyRequest().permitAll())
+
+                    // ── Public (unauthenticated) ─────────────────────────────
+                    // Klinikumnamen sind nicht personenbezogen – öffentlich lesbar
+                    .requestMatchers(HttpMethod.GET, "/api/klinikum", "/api/klinikum/*").permitAll()
+
+                    // ── Alle anderen /api/** Endpunkte: Login erforderlich ───
+                    // Rollen-Checks erfolgen in den Controllern via SecurityService
+                    .requestMatchers("/api/**").authenticated()
+
+                    // ── Nicht-API Pfade ──────────────────────────────────────
+                    .anyRequest().permitAll()
+                )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
                 .build();
     }

@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
@@ -29,36 +32,56 @@ public class Patient {
     private Long id;
 
     @NotBlank(message = "Vorname ist erforderlich")
+    @Size(max = 100, message = "Vorname darf maximal 100 Zeichen haben")
     private String vorname;
 
     @NotBlank(message = "Nachname ist erforderlich")
+    @Size(max = 100, message = "Nachname darf maximal 100 Zeichen haben")
     private String nachname;
 
     @NotNull(message = "Geburtsdatum ist erforderlich")
+    @Past(message = "Geburtsdatum muss in der Vergangenheit liegen")
     private LocalDate geburtsdatum;
 
     @NotBlank(message = "Versicherungsnummer ist erforderlich")
+    @Size(min = 5, max = 30, message = "Versicherungsnummer muss zwischen 5 und 30 Zeichen lang sein")
     private String versicherungsnr;
 
+    @Pattern(regexp = "^[+0-9\\s()\\-]{0,20}$", message = "Telefonnummer ist ungültig")
     private String telefon;
 
-    @Email(message = "Ungültige E-Mail-Adresse")
+    @Email(message = "E-Mail-Adresse ist ungültig")
+    @Size(max = 150, message = "E-Mail darf maximal 150 Zeichen haben")
     private String email;
 
+    @Size(max = 250, message = "Adresse darf maximal 250 Zeichen haben")
     private String adresse;
 
     @ManyToOne
     @JoinColumn(name = "klinikum_id")
     private Klinikum klinikum;
 
+    @Size(max = 50, message = "Etage darf maximal 50 Zeichen haben")
     private String etage;
+
+    @Size(max = 100, message = "Abteilung darf maximal 100 Zeichen haben")
     private String abteilung;
+
+    @Size(max = 100, message = "Station darf maximal 100 Zeichen haben")
     private String station;
+
+    @Size(max = 20, message = "Zimmer darf maximal 20 Zeichen haben")
     private String zimmer;
+
+    @Size(max = 20, message = "Bett darf maximal 20 Zeichen haben")
     private String bett;
 
     @Enumerated(EnumType.STRING)
     private PatientStatus status;
+
+    private LocalDate aufnahmeDatum;
+
+    private boolean eigenanteilBezahlt = false;
 
     @Embedded
     @AttributeOverrides({
@@ -116,6 +139,12 @@ public class Patient {
     public NotfallKontakt getNotfallkontakt() { return notfallkontakt; }
     public void setNotfallkontakt(NotfallKontakt notfallkontakt) { this.notfallkontakt = notfallkontakt; }
 
+    public LocalDate getAufnahmeDatum() { return aufnahmeDatum; }
+    public void setAufnahmeDatum(LocalDate aufnahmeDatum) { this.aufnahmeDatum = aufnahmeDatum; }
+
+    public boolean isEigenanteilBezahlt() { return eigenanteilBezahlt; }
+    public void setEigenanteilBezahlt(boolean eigenanteilBezahlt) { this.eigenanteilBezahlt = eigenanteilBezahlt; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -125,9 +154,7 @@ public class Patient {
     }
 
     @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
+    public int hashCode() { return id != null ? id.hashCode() : 0; }
 
     @Override
     public String toString() {

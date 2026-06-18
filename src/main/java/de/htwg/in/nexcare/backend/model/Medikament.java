@@ -2,6 +2,7 @@ package de.htwg.in.nexcare.backend.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Medikament {
@@ -11,13 +12,17 @@ public class Medikament {
     private Long id;
 
     @NotBlank(message = "Name ist erforderlich")
+    @Size(max = 150, message = "Name darf maximal 150 Zeichen haben")
     private String name;
 
     @NotBlank(message = "Wirkstoff ist erforderlich")
+    @Size(max = 150, message = "Wirkstoff darf maximal 150 Zeichen haben")
     private String wirkstoff;
 
+    @Size(max = 500, message = "Beschreibung darf maximal 500 Zeichen haben")
     private String beschreibung;
 
+    @Size(max = 30, message = "Dosiereinheit darf maximal 30 Zeichen haben")
     private String dosiereinheit;
 
     private boolean archiviert = false;

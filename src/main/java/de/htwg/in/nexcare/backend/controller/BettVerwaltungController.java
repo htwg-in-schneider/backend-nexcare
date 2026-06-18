@@ -2,7 +2,11 @@ package de.htwg.in.nexcare.backend.controller;
 
 import de.htwg.in.nexcare.backend.model.*;
 import de.htwg.in.nexcare.backend.repository.*;
+import de.htwg.in.nexcare.backend.service.EmailService;
+import de.htwg.in.nexcare.backend.service.SecurityService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -16,20 +20,29 @@ public class BettVerwaltungController {
     private final BettRepository bettRepo;
     private final KlinikumRepository klinikumRepo;
     private final PatientRepository patientRepo;
+    private final AppUserRepository appUserRepo;
+    private final EmailService emailService;
+    private final SecurityService securityService;
 
     public BettVerwaltungController(EtageRepository etageRepo, ZimmerRepository zimmerRepo,
                                     BettRepository bettRepo, KlinikumRepository klinikumRepo,
-                                    PatientRepository patientRepo) {
+                                    PatientRepository patientRepo, AppUserRepository appUserRepo,
+                                    EmailService emailService, SecurityService securityService) {
         this.etageRepo = etageRepo;
         this.zimmerRepo = zimmerRepo;
         this.bettRepo = bettRepo;
         this.klinikumRepo = klinikumRepo;
         this.patientRepo = patientRepo;
+        this.appUserRepo = appUserRepo;
+        this.emailService = emailService;
+        this.securityService = securityService;
     }
 
     /** Returns the full hospital structure: Klinikum → Etagen → Zimmer → Betten */
     @GetMapping("/struktur")
-    public ResponseEntity<Map<String, Object>> getStruktur(@RequestParam Long klinikumId) {
+    public ResponseEntity<Map<String, Object>> getStruktur(@RequestParam Long klinikumId,
+                                                            @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
         Optional<Klinikum> opt = klinikumRepo.findById(klinikumId);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         Klinikum klinikum = opt.get();
@@ -85,12 +98,27 @@ public class BettVerwaltungController {
     // ── Etage CRUD ───────────────────────────────────────────────────────────
 
     @PostMapping("/etage")
-    public ResponseEntity<Map<String, Object>> createEtage(@RequestBody Map<String, Object> body) {
-        Long klinikumId = Long.valueOf(body.get("klinikumId").toString());
+    public ResponseEntity<Map<String, Object>> createEtage(@RequestBody Map<String, Object> body,
+                                                            @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
+        Object klinikumIdRaw = body.get("klinikumId");
+        Object nummerRaw = body.get("nummer");
+        Object bezeichnungRaw = body.get("bezeichnung");
+        if (klinikumIdRaw == null || nummerRaw == null || bezeichnungRaw == null
+                || bezeichnungRaw.toString().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("fehler", "klinikumId, nummer und bezeichnung sind erforderlich"));
+        }
+        Long klinikumId = Long.valueOf(klinikumIdRaw.toString());
         Optional<Klinikum> opt = klinikumRepo.findById(klinikumId);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
-        int nummer = ((Number) body.get("nummer")).intValue();
-        String bezeichnung = body.get("bezeichnung").toString();
+        int nummer = ((Number) nummerRaw).intValue();
+        if (nummer < -5 || nummer > 100) {
+            return ResponseEntity.badRequest().body(Map.of("fehler", "Stockwerk muss zwischen -5 und 100 liegen"));
+        }
+        String bezeichnung = bezeichnungRaw.toString().trim();
+        if (bezeichnung.length() > 100) {
+            return ResponseEntity.badRequest().body(Map.of("fehler", "Bezeichnung darf maximal 100 Zeichen haben"));
+        }
         Etage etage = etageRepo.save(new Etage(nummer, bezeichnung, opt.get()));
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("id", etage.getId());
@@ -100,7 +128,8 @@ public class BettVerwaltungController {
     }
 
     @DeleteMapping("/etage/{id}")
-    public ResponseEntity<Void> deleteEtage(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteEtage(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isAdmin(jwt)) return ResponseEntity.status(403).build();
         if (!etageRepo.existsById(id)) return ResponseEntity.notFound().build();
         List<Zimmer> zimmerList = zimmerRepo.findByEtageIdOrderByNummerAsc(id);
         for (Zimmer z : zimmerList) releaseAndDeleteBetten(z.getId());
@@ -112,13 +141,23 @@ public class BettVerwaltungController {
     // ── Zimmer CRUD ──────────────────────────────────────────────────────────
 
     @PostMapping("/zimmer")
-    public ResponseEntity<Map<String, Object>> createZimmer(@RequestBody Map<String, Object> body) {
-        Long etageId = Long.valueOf(body.get("etageId").toString());
+    public ResponseEntity<Map<String, Object>> createZimmer(@RequestBody Map<String, Object> body,
+                                                             @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
+        Object etageIdRaw = body.get("etageId");
+        Object nummerRaw = body.get("nummer");
+        if (etageIdRaw == null || nummerRaw == null || nummerRaw.toString().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("fehler", "etageId und nummer sind erforderlich"));
+        }
+        Long etageId = Long.valueOf(etageIdRaw.toString());
         Optional<Etage> opt = etageRepo.findById(etageId);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
-        String nummer = body.get("nummer").toString();
-        String abteilung = body.getOrDefault("abteilung", "").toString();
-        String station = body.getOrDefault("station", "").toString();
+        String nummer = nummerRaw.toString().trim();
+        if (nummer.length() > 20) {
+            return ResponseEntity.badRequest().body(Map.of("fehler", "Zimmernummer darf maximal 20 Zeichen haben"));
+        }
+        String abteilung = body.getOrDefault("abteilung", "").toString().trim();
+        String station = body.getOrDefault("station", "").toString().trim();
         Zimmer zimmer = zimmerRepo.save(new Zimmer(nummer, abteilung, station, opt.get()));
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("id", zimmer.getId());
@@ -130,7 +169,8 @@ public class BettVerwaltungController {
     }
 
     @DeleteMapping("/zimmer/{id}")
-    public ResponseEntity<Void> deleteZimmer(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteZimmer(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isAdmin(jwt)) return ResponseEntity.status(403).build();
         if (!zimmerRepo.existsById(id)) return ResponseEntity.notFound().build();
         releaseAndDeleteBetten(id);
         zimmerRepo.deleteById(id);
@@ -140,11 +180,21 @@ public class BettVerwaltungController {
     // ── Bett CRUD ────────────────────────────────────────────────────────────
 
     @PostMapping("/bett")
-    public ResponseEntity<Map<String, Object>> createBett(@RequestBody Map<String, Object> body) {
-        Long zimmerId = Long.valueOf(body.get("zimmerId").toString());
+    public ResponseEntity<Map<String, Object>> createBett(@RequestBody Map<String, Object> body,
+                                                           @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
+        Object zimmerIdRaw = body.get("zimmerId");
+        Object bezeichnungRaw = body.get("bezeichnung");
+        if (zimmerIdRaw == null || bezeichnungRaw == null || bezeichnungRaw.toString().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("fehler", "zimmerId und bezeichnung sind erforderlich"));
+        }
+        Long zimmerId = Long.valueOf(zimmerIdRaw.toString());
         Optional<Zimmer> opt = zimmerRepo.findById(zimmerId);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
-        String bezeichnung = body.get("bezeichnung").toString();
+        String bezeichnung = bezeichnungRaw.toString().trim();
+        if (bezeichnung.length() > 50) {
+            return ResponseEntity.badRequest().body(Map.of("fehler", "Bezeichnung darf maximal 50 Zeichen haben"));
+        }
         Bett bett = bettRepo.save(new Bett(bezeichnung, opt.get()));
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("id", bett.getId());
@@ -156,7 +206,8 @@ public class BettVerwaltungController {
     }
 
     @DeleteMapping("/bett/{id}")
-    public ResponseEntity<Void> deleteBett(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteBett(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isAdmin(jwt)) return ResponseEntity.status(403).build();
         Optional<Bett> opt = bettRepo.findById(id);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         Bett bett = opt.get();
@@ -173,7 +224,9 @@ public class BettVerwaltungController {
 
     @PutMapping("/bett/{bettId}/assign/{patientId}")
     public ResponseEntity<Map<String, Object>> assignPatient(
-            @PathVariable Long bettId, @PathVariable Long patientId) {
+            @PathVariable Long bettId, @PathVariable Long patientId,
+            @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
         Optional<Bett> optBett = bettRepo.findById(bettId);
         Optional<Patient> optPatient = patientRepo.findById(patientId);
         if (optBett.isEmpty() || optPatient.isEmpty()) return ResponseEntity.notFound().build();
@@ -206,6 +259,19 @@ public class BettVerwaltungController {
         patient.setBett(bett.getBezeichnung());
         patientRepo.save(patient);
 
+        // notify patient by email if they have a contact email
+        appUserRepo.findByPatientId(patientId).ifPresent(user -> {
+            String ke = user.getKontaktEmail();
+            if (ke != null && !ke.isBlank()) {
+                String klinikumName = etage.getKlinikum() != null ? etage.getKlinikum().getName() : "–";
+                String patName = patient.getVorname() + " " + patient.getNachname();
+                String html = emailService.bettZugewiesenHtml(
+                    patName, klinikumName, etage.getBezeichnung(),
+                    zimmer.getNummer(), bett.getBezeichnung());
+                emailService.send(ke, "Bett zugewiesen – NexCare", html, EmailType.BETT_ZUGEWIESEN);
+            }
+        });
+
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("bettId", bett.getId());
         resp.put("status", bett.getStatus().name());
@@ -215,7 +281,9 @@ public class BettVerwaltungController {
     }
 
     @PutMapping("/bett/{bettId}/release")
-    public ResponseEntity<Map<String, Object>> releaseBett(@PathVariable Long bettId) {
+    public ResponseEntity<Map<String, Object>> releaseBett(@PathVariable Long bettId,
+                                                            @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
         Optional<Bett> opt = bettRepo.findById(bettId);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         Bett bett = opt.get();
@@ -236,7 +304,9 @@ public class BettVerwaltungController {
 
     @PutMapping("/bett/{bettId}/status")
     public ResponseEntity<Map<String, Object>> updateBettStatus(
-            @PathVariable Long bettId, @RequestBody Map<String, String> body) {
+            @PathVariable Long bettId, @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal Jwt jwt) {
+        if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
         Optional<Bett> opt = bettRepo.findById(bettId);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         Bett bett = opt.get();
