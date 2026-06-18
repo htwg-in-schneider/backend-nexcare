@@ -10,15 +10,16 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import de.htwg.in.nexcare.backend.model.Bett;
+import de.htwg.in.nexcare.backend.model.BettStatus;
 import de.htwg.in.nexcare.backend.model.Patient;
 import de.htwg.in.nexcare.backend.model.PatientNachricht;
 import de.htwg.in.nexcare.backend.model.PatientStatus;
 import de.htwg.in.nexcare.backend.repository.AppUserRepository;
+import de.htwg.in.nexcare.backend.repository.BettRepository;
 import de.htwg.in.nexcare.backend.repository.PatientNachrichtRepository;
 import de.htwg.in.nexcare.backend.repository.PatientRepository;
 import de.htwg.in.nexcare.backend.service.SecurityService;
-import org.springframework.beans.factory.annotation.Value;
-
 import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
@@ -34,10 +35,8 @@ public class PatientController {
     @Autowired private PatientRepository patientRepository;
     @Autowired private AppUserRepository appUserRepository;
     @Autowired private PatientNachrichtRepository nachrichtRepository;
+    @Autowired private BettRepository bettRepository;
     @Autowired private SecurityService securityService;
-
-    @Value("${app.frontend.url:http://localhost:5173}")
-    private String frontendUrl;
 
     /** Any authenticated user can list patients (role-restricted views handled in frontend). */
     @GetMapping
@@ -109,8 +108,16 @@ public class PatientController {
         if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
         return patientRepository.findById(id).map(p -> {
             p.setStatus(PatientStatus.ENTLASSEN);
+            // Bett freigeben, damit es neu belegt werden kann
+            bettRepository.findByPatientId(id).ifPresent(bett -> {
+                bett.setPatient(null);
+                bett.setStatus(BettStatus.FREI);
+                bettRepository.save(bett);
+            });
+            p.setBett(null); p.setZimmer(null); p.setEtage(null);
+            p.setAbteilung(null); p.setStation(null);
             Patient saved = patientRepository.save(p);
-            LOG.info("Patient {} entlassen", id);
+            LOG.info("Patient {} entlassen, Bett freigegeben", id);
             return ResponseEntity.ok(saved);
         }).orElse(ResponseEntity.notFound().build());
     }

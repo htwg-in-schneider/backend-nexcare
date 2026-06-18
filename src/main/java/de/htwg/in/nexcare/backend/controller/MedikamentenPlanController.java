@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,9 @@ public class MedikamentenPlanController {
         Optional<Medikament> medikament = medikamentRepository.findById(eintrag.getMedikament().getId());
         if (medikament.isEmpty()) return ResponseEntity.badRequest().build();
 
+        if (eintrag.getStartDatum() != null && eintrag.getStartDatum().isBefore(LocalDate.of(2000, 1, 1))) {
+            return ResponseEntity.badRequest().build();
+        }
         if (eintrag.getEndDatum() != null && eintrag.getStartDatum() != null
                 && eintrag.getEndDatum().isBefore(eintrag.getStartDatum())) {
             return ResponseEntity.badRequest().build();

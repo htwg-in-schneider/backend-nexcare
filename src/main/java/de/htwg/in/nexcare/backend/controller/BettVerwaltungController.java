@@ -6,6 +6,7 @@ import de.htwg.in.nexcare.backend.service.SecurityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -219,6 +220,7 @@ public class BettVerwaltungController {
 
     // ── Patienten-Zuweisung ──────────────────────────────────────────────────
 
+    @Transactional
     @PutMapping("/bett/{bettId}/assign/{patientId}")
     public ResponseEntity<Map<String, Object>> assignPatient(
             @PathVariable Long bettId, @PathVariable Long patientId,
