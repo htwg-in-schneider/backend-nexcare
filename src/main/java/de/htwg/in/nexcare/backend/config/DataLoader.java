@@ -29,10 +29,12 @@ public class DataLoader {
             loadInitialUsers(userRepository);
             if (klinikumRepository.count() == 0) {
                 LOGGER.info("Database is empty. Loading initial data...");
-                Klinikum[] klinika = loadInitialData(klinikumRepository, patientRepository);
+                Klinikum[] klinika = loadInitialData(klinikumRepository, patientRepository, userRepository);
                 loadInitialBettStruktur(klinika[0], patientRepository, etageRepository, zimmerRepository, bettRepository);
             } else {
                 LOGGER.info("Database already contains data. Skipping data loading.");
+                // Ensure demo patient user is still linked (idempotent)
+                linkDemoPatient(userRepository, patientRepository);
             }
             if (medikamentRepository.count() == 0) {
                 loadInitialMedikamente(medikamentRepository);
@@ -71,8 +73,21 @@ public class DataLoader {
         });
     }
 
+    /** Links the demo patient AppUser to the first saved Patient record (idempotent). */
+    private void linkDemoPatient(AppUserRepository userRepository, PatientRepository patientRepository) {
+        userRepository.findByEmail("patient@nexcare.de").ifPresent(user -> {
+            if (user.getPatientId() != null) return;
+            patientRepository.findAll().stream().findFirst().ifPresent(p -> {
+                user.setPatientId(p.getId());
+                userRepository.save(user);
+                LOGGER.info("Linked demo patient user to Patient #{}", p.getId());
+            });
+        });
+    }
+
     private Klinikum[] loadInitialData(KlinikumRepository klinikumRepository,
-                                       PatientRepository patientRepository) {
+                                       PatientRepository patientRepository,
+                                       AppUserRepository userRepository) {
         Klinikum konstanz = klinikumRepository.save(new Klinikum("Klinikum Konstanz", "Konstanz"));
         Klinikum singen   = klinikumRepository.save(new Klinikum("Klinikum Singen", "Singen"));
         klinikumRepository.save(new Klinikum("Universitätsklinikum Freiburg", "Freiburg"));
@@ -110,6 +125,16 @@ public class DataLoader {
         patientRepository.saveAll(Arrays.asList(maria, thomas, anna, peter, lisa));
         LOGGER.info("Initial Klinika ({}) and patients ({}) loaded successfully.",
                 klinikumRepository.count(), patientRepository.count());
+
+        // Link demo patient AppUser to Maria Schmidt so the portal works out of the box
+        userRepository.findByEmail("patient@nexcare.de").ifPresent(user -> {
+            if (user.getPatientId() == null) {
+                user.setPatientId(maria.getId());
+                userRepository.save(user);
+                LOGGER.info("Linked demo patient user to Patient #{} (Maria Schmidt)", maria.getId());
+            }
+        });
+
         return new Klinikum[]{ konstanz, singen };
     }
 
