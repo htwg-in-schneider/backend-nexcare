@@ -39,10 +39,10 @@ public class PatientNachrichtController {
                                              @PathVariable Long nachrichtId,
                                              @AuthenticationPrincipal Jwt jwt) {
         if (!securityService.isStaffOrPatient(jwt, patientId)) return ResponseEntity.status(403).build();
-        return nachrichtRepository.findById(nachrichtId).map(n -> {
-            n.setGelesen(true);
-            nachrichtRepository.save(n);
-            return ResponseEntity.<Void>ok().build();
-        }).orElse(ResponseEntity.notFound().build());
+        PatientNachricht n = nachrichtRepository.findById(nachrichtId).orElse(null);
+        if (n == null) return ResponseEntity.notFound().build();
+        n.setGelesen(true);
+        nachrichtRepository.save(n);
+        return ResponseEntity.<Void>noContent().build();
     }
 }
