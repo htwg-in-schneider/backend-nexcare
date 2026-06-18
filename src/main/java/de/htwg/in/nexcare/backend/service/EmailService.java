@@ -31,7 +31,7 @@ public class EmailService {
     @Autowired
     private EmailLogRepository emailLogRepository;
 
-    @Value("${spring.mail.username:noreply@example.com}")
+    @Value("${mail.from:${spring.mail.username:noreply@example.com}}")
     private String fromAddress;
 
     // ── core send ────────────────────────────────────────────────────────────
