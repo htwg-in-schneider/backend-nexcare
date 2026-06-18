@@ -55,4 +55,13 @@ public class GlobalExceptionHandler {
         body.put("fehler", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleAll(Exception ex) {
+        LOG.error("Unhandled exception", ex);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", 500);
+        body.put("fehler", "Ein interner Fehler ist aufgetreten");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
 }
