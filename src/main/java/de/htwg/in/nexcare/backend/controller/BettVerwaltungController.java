@@ -2,7 +2,6 @@ package de.htwg.in.nexcare.backend.controller;
 
 import de.htwg.in.nexcare.backend.model.*;
 import de.htwg.in.nexcare.backend.repository.*;
-import de.htwg.in.nexcare.backend.service.EmailService;
 import de.htwg.in.nexcare.backend.service.SecurityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,21 +19,19 @@ public class BettVerwaltungController {
     private final BettRepository bettRepo;
     private final KlinikumRepository klinikumRepo;
     private final PatientRepository patientRepo;
-    private final AppUserRepository appUserRepo;
-    private final EmailService emailService;
+    private final PatientNachrichtRepository nachrichtRepo;
     private final SecurityService securityService;
 
     public BettVerwaltungController(EtageRepository etageRepo, ZimmerRepository zimmerRepo,
                                     BettRepository bettRepo, KlinikumRepository klinikumRepo,
-                                    PatientRepository patientRepo, AppUserRepository appUserRepo,
-                                    EmailService emailService, SecurityService securityService) {
+                                    PatientRepository patientRepo,
+                                    PatientNachrichtRepository nachrichtRepo, SecurityService securityService) {
         this.etageRepo = etageRepo;
         this.zimmerRepo = zimmerRepo;
         this.bettRepo = bettRepo;
         this.klinikumRepo = klinikumRepo;
         this.patientRepo = patientRepo;
-        this.appUserRepo = appUserRepo;
-        this.emailService = emailService;
+        this.nachrichtRepo = nachrichtRepo;
         this.securityService = securityService;
     }
 
@@ -259,18 +256,15 @@ public class BettVerwaltungController {
         patient.setBett(bett.getBezeichnung());
         patientRepo.save(patient);
 
-        // notify patient by email if they have a contact email
-        appUserRepo.findByPatientId(patientId).ifPresent(user -> {
-            String ke = user.getKontaktEmail();
-            if (ke != null && !ke.isBlank()) {
-                String klinikumName = etage.getKlinikum() != null ? etage.getKlinikum().getName() : "–";
-                String patName = patient.getVorname() + " " + patient.getNachname();
-                String html = emailService.bettZugewiesenHtml(
-                    patName, klinikumName, etage.getBezeichnung(),
-                    zimmer.getNummer(), bett.getBezeichnung());
-                emailService.send(ke, "Bett zugewiesen – NexCare", html, EmailType.BETT_ZUGEWIESEN);
-            }
-        });
+        // Notify patient in portal
+        String klinikumName = etage.getKlinikum() != null ? etage.getKlinikum().getName() : "–";
+        nachrichtRepo.save(new PatientNachricht(patient,
+            "Bett zugewiesen",
+            "Ihnen wurde ein Bett zugewiesen. Klinikum: " + klinikumName +
+            ", Etage: " + etage.getBezeichnung() +
+            ", Zimmer: " + zimmer.getNummer() +
+            ", Bett: " + bett.getBezeichnung() + ". Bitte melden Sie sich an der Aufnahme.",
+            "BETT"));
 
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("bettId", bett.getId());

@@ -10,12 +10,12 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-import de.htwg.in.nexcare.backend.model.EmailType;
 import de.htwg.in.nexcare.backend.model.Patient;
+import de.htwg.in.nexcare.backend.model.PatientNachricht;
 import de.htwg.in.nexcare.backend.model.PatientStatus;
 import de.htwg.in.nexcare.backend.repository.AppUserRepository;
+import de.htwg.in.nexcare.backend.repository.PatientNachrichtRepository;
 import de.htwg.in.nexcare.backend.repository.PatientRepository;
-import de.htwg.in.nexcare.backend.service.EmailService;
 import de.htwg.in.nexcare.backend.service.SecurityService;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -33,7 +33,7 @@ public class PatientController {
 
     @Autowired private PatientRepository patientRepository;
     @Autowired private AppUserRepository appUserRepository;
-    @Autowired private EmailService emailService;
+    @Autowired private PatientNachrichtRepository nachrichtRepository;
     @Autowired private SecurityService securityService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
@@ -92,16 +92,12 @@ public class PatientController {
         Patient saved = patientRepository.save(patient);
         LOG.info("Created new patient id={}", saved.getId());
 
-        // Send welcome email to the linked AppUser's kontaktEmail (not patient.email which is a placeholder)
-        appUserRepository.findByEmail(saved.getEmail()).ifPresent(user -> {
-            String dest = (user.getKontaktEmail() != null && !user.getKontaktEmail().isBlank())
-                ? user.getKontaktEmail() : user.getEmail();
-            String html = emailService.willkommensEmail(
-                saved.getVorname() + " " + saved.getNachname(),
-                frontendUrl + "/registrierung-info"
-            );
-            emailService.send(dest, "Willkommen bei NexCare – Patientenportal", html, EmailType.WILLKOMMEN);
-        });
+        // Send welcome message in patient portal
+        nachrichtRepository.save(new PatientNachricht(saved,
+            "Willkommen im NexCare-Patientenportal",
+            "Ihre Patientenakte wurde angelegt. Sobald Ihr Zugang eingerichtet ist, " +
+            "können Sie sich hier anmelden und Ihren Behandlungsplan einsehen.",
+            "WILLKOMMEN"));
 
         return ResponseEntity.ok(saved);
     }

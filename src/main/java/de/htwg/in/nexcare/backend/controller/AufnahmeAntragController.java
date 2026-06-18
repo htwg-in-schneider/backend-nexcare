@@ -1,9 +1,7 @@
 package de.htwg.in.nexcare.backend.controller;
 
 import de.htwg.in.nexcare.backend.model.*;
-import de.htwg.in.nexcare.backend.model.EmailType;
 import de.htwg.in.nexcare.backend.repository.*;
-import de.htwg.in.nexcare.backend.service.EmailService;
 import de.htwg.in.nexcare.backend.service.SecurityService;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -29,7 +27,7 @@ public class AufnahmeAntragController {
     @Autowired private AppUserRepository userRepository;
     @Autowired private PatientRepository patientRepository;
     @Autowired private KlinikumRepository klinikumRepository;
-    @Autowired private EmailService emailService;
+    @Autowired private PatientNachrichtRepository nachrichtRepository;
     @Autowired private SecurityService securityService;
 
     public record AntragRequest(
@@ -137,16 +135,14 @@ public class AufnahmeAntragController {
 
         LOG.info("Aufnahmeantrag #{} bestätigt → Patient #{}", id, saved.getId());
 
-        if (user != null) {
-            // Prefer kontaktEmail (set by user in profile) over the Auth0 login email
-            String dest = (user.getKontaktEmail() != null && !user.getKontaktEmail().isBlank())
-                ? user.getKontaktEmail() : user.getEmail();
-            if (dest != null && !dest.isBlank()) {
-                String html = emailService.aufnahmeBestaetigt(antrag.getPatientName(),
-                    antrag.getKlinikum().getName(), antrag.getAbteilung());
-                emailService.send(dest, "Ihr Aufnahmeantrag wurde bestätigt – NexCare", html, EmailType.AUFNAHME_BESTAETIGT);
-            }
-        }
+        // Notify patient in portal
+        String klinikumName = antrag.getKlinikum() != null ? antrag.getKlinikum().getName() : "–";
+        String abteilung = antrag.getAbteilung() != null && !antrag.getAbteilung().isBlank() ? antrag.getAbteilung() : "–";
+        nachrichtRepository.save(new PatientNachricht(saved,
+            "Aufnahmeantrag bestätigt",
+            "Ihr Aufnahmeantrag wurde genehmigt. Klinikum: " + klinikumName + ", Abteilung: " + abteilung +
+            ". Bitte melden Sie sich an der Aufnahme.",
+            "AUFNAHME"));
 
         return ResponseEntity.ok(saved);
     }
