@@ -1,11 +1,11 @@
 package de.htwg.in.nexcare.backend.controller;
 
 import de.htwg.in.nexcare.backend.model.AppUser;
-import de.htwg.in.nexcare.backend.model.EmailType;
 import de.htwg.in.nexcare.backend.model.Patient;
+import de.htwg.in.nexcare.backend.model.PatientNachricht;
 import de.htwg.in.nexcare.backend.repository.AppUserRepository;
+import de.htwg.in.nexcare.backend.repository.PatientNachrichtRepository;
 import de.htwg.in.nexcare.backend.repository.PatientRepository;
-import de.htwg.in.nexcare.backend.service.EmailService;
 import de.htwg.in.nexcare.backend.service.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,10 +28,9 @@ public class ZahlungController {
 
     @Autowired private AppUserRepository userRepository;
     @Autowired private PatientRepository patientRepository;
-    @Autowired private EmailService emailService;
+    @Autowired private PatientNachrichtRepository nachrichtRepository;
     @Autowired private SecurityService securityService;
 
-    /** Returns the calculated Eigenanteil for the logged-in patient. PATIENT only. */
     @GetMapping("/eigenanteil")
     public ResponseEntity<Map<String, Object>> getEigenanteil(@AuthenticationPrincipal Jwt jwt) {
         if (!securityService.isPatient(jwt)) return ResponseEntity.status(403).build();
@@ -47,13 +46,11 @@ public class ZahlungController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    /** Records payment. PATIENT only. */
     @PostMapping("/zahlung")
     public ResponseEntity<Map<String, Object>> zahlung(@AuthenticationPrincipal Jwt jwt) {
         if (!securityService.isPatient(jwt)) return ResponseEntity.status(403).build();
         return resolvePatient(jwt).map(result -> {
             Patient p = (Patient) result[0];
-            AppUser user = (AppUser) result[1];
 
             if (p.isEigenanteilBezahlt()) {
                 return ResponseEntity.ok(Map.<String, Object>of("status", "bereits_bezahlt"));
@@ -61,27 +58,20 @@ public class ZahlungController {
 
             double betrag = berechne(p);
             String referenzNr = "NXC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            String heute = LocalDate.now().format(DE);
 
             p.setEigenanteilBezahlt(true);
             patientRepository.save(p);
 
-            String kontaktEmail = user.getKontaktEmail();
-            if (kontaktEmail != null && !kontaktEmail.isBlank()) {
-                String klinikumName = p.getKlinikum() != null ? p.getKlinikum().getName() : "–";
-                String aufDatum = p.getAufnahmeDatum() != null ? p.getAufnahmeDatum().format(DE) : "–";
-                String html = emailService.zahlungHtml(
-                    p.getVorname() + " " + p.getNachname(),
-                    referenzNr, betrag, klinikumName, aufDatum, heute
-                );
-                emailService.send(kontaktEmail, "Zahlungsbestätigung – NexCare Patientenportal", html, EmailType.ZAHLUNG);
-            }
+            nachrichtRepository.save(new PatientNachricht(p,
+                "Zahlungsbestätigung",
+                String.format("Ihr Eigenanteil von %.2f € wurde erfolgreich bezahlt. Referenznr.: %s",
+                    betrag, referenzNr),
+                "ALLGEMEIN"));
 
             return ResponseEntity.ok(Map.<String, Object>of(
                 "status", "bezahlt",
                 "betrag", betrag,
-                "referenzNr", referenzNr,
-                "emailGesendet", kontaktEmail != null && !kontaktEmail.isBlank()
+                "referenzNr", referenzNr
             ));
         }).orElse(ResponseEntity.notFound().build());
     }
