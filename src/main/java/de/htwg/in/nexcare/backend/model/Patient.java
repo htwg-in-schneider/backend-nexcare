@@ -81,8 +81,6 @@ public class Patient {
 
     private LocalDate aufnahmeDatum;
 
-    private boolean eigenanteilBezahlt = false;
-
     @Embedded
     @AttributeOverrides({
         @AttributeOverride(name = "name",      column = @Column(name = "notfall_name")),
@@ -142,8 +140,6 @@ public class Patient {
     public LocalDate getAufnahmeDatum() { return aufnahmeDatum; }
     public void setAufnahmeDatum(LocalDate aufnahmeDatum) { this.aufnahmeDatum = aufnahmeDatum; }
 
-    public boolean isEigenanteilBezahlt() { return eigenanteilBezahlt; }
-    public void setEigenanteilBezahlt(boolean eigenanteilBezahlt) { this.eigenanteilBezahlt = eigenanteilBezahlt; }
 
     @Override
     public boolean equals(Object o) {
