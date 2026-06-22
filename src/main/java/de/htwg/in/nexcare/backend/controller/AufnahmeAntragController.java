@@ -137,11 +137,10 @@ public class AufnahmeAntragController {
 
         // Notify patient in portal
         String klinikumName = antrag.getKlinikum() != null ? antrag.getKlinikum().getName() : "–";
-        String abteilung = antrag.getAbteilung() != null && !antrag.getAbteilung().isBlank() ? antrag.getAbteilung() : "–";
         nachrichtRepository.save(new PatientNachricht(saved,
             "Aufnahmeantrag bestätigt",
-            "Ihr Aufnahmeantrag wurde genehmigt. Klinikum: " + klinikumName + ", Abteilung: " + abteilung +
-            ". Bitte melden Sie sich an der Aufnahme.",
+            "Ihr Aufnahmeantrag für " + klinikumName +
+            " wurde genehmigt. Bitte melden Sie sich an der Aufnahme.",
             "AUFNAHME"));
 
         return ResponseEntity.ok(saved);
