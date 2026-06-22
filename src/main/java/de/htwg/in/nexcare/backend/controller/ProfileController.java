@@ -41,6 +41,26 @@ public class ProfileController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/mein-patient")
+    public ResponseEntity<Patient> updateMeinPatient(@AuthenticationPrincipal Jwt jwt,
+                                                      @RequestBody Patient details) {
+        String oauthId = jwt.getSubject();
+        return userRepository.findByOauthId(oauthId)
+                .filter(u -> u.getPatientId() != null)
+                .flatMap(u -> patientRepository.findById(u.getPatientId()))
+                .map(patient -> {
+                    if (details.getVorname() != null) patient.setVorname(details.getVorname());
+                    if (details.getNachname() != null) patient.setNachname(details.getNachname());
+                    patient.setEmail(details.getEmail());
+                    patient.setTelefon(details.getTelefon());
+                    patient.setAdresse(details.getAdresse());
+                    Patient saved = patientRepository.save(patient);
+                    LOG.info("Patient {} updated own profile", saved.getId());
+                    return ResponseEntity.ok(saved);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping
     public ResponseEntity<AppUser> updateProfile(@AuthenticationPrincipal Jwt jwt,
                                                   @RequestBody AppUser details) {
