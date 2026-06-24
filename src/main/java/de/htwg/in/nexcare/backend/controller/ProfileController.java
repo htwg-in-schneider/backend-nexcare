@@ -53,7 +53,9 @@ public class ProfileController {
                     if (details.getNachname() != null) patient.setNachname(details.getNachname());
                     patient.setEmail(details.getEmail());
                     patient.setTelefon(details.getTelefon());
-                    patient.setAdresse(details.getAdresse());
+                    patient.setStrasse(details.getStrasse());
+                    patient.setPlz(details.getPlz());
+                    patient.setOrt(details.getOrt());
                     Patient saved = patientRepository.save(patient);
                     LOG.info("Patient {} updated own profile", saved.getId());
                     return ResponseEntity.ok(saved);
@@ -69,7 +71,9 @@ public class ProfileController {
             if (details.getName() != null && !details.getName().isBlank()) {
                 user.setName(details.getName());
             }
-            user.setAdresse(details.getAdresse());
+            user.setStrasse(details.getStrasse());
+            user.setPlz(details.getPlz());
+            user.setOrt(details.getOrt());
             user.setKontaktEmail(details.getKontaktEmail());
             AppUser saved = userRepository.save(user);
             LOG.info("Updated profile for sub={}", oauthId);

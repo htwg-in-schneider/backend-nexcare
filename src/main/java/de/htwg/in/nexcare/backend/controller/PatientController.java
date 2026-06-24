@@ -136,13 +136,18 @@ public class PatientController {
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
 
         Patient patient = opt.get();
+        if (details.getGeburtsdatum() != null && details.getGeburtsdatum().getYear() < 1900) {
+            return ResponseEntity.badRequest().build();
+        }
         patient.setVorname(details.getVorname());
         patient.setNachname(details.getNachname());
         patient.setGeburtsdatum(details.getGeburtsdatum());
         patient.setVersicherungsnr(details.getVersicherungsnr());
         patient.setTelefon(details.getTelefon());
         patient.setEmail(details.getEmail());
-        patient.setAdresse(details.getAdresse());
+        patient.setStrasse(details.getStrasse());
+        patient.setPlz(details.getPlz());
+        patient.setOrt(details.getOrt());
         patient.setKlinikum(details.getKlinikum());
         patient.setEtage(details.getEtage());
         patient.setAbteilung(details.getAbteilung());

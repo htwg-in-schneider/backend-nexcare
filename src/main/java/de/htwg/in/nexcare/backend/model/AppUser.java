@@ -3,6 +3,7 @@ package de.htwg.in.nexcare.backend.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -22,8 +23,14 @@ public class AppUser {
     @Size(max = 150, message = "E-Mail darf maximal 150 Zeichen haben")
     private String email;
 
-    @Size(max = 250, message = "Adresse darf maximal 250 Zeichen haben")
-    private String adresse;
+    @Size(max = 150, message = "Straße darf maximal 150 Zeichen haben")
+    private String strasse;
+
+    @Pattern(regexp = "^$|^[0-9]{5}$", message = "PLZ muss 5 Ziffern haben")
+    private String plz;
+
+    @Size(max = 100, message = "Ort darf maximal 100 Zeichen haben")
+    private String ort;
 
     private String oauthId;
 
@@ -47,8 +54,14 @@ public class AppUser {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getAdresse() { return adresse; }
-    public void setAdresse(String adresse) { this.adresse = adresse; }
+    public String getStrasse() { return strasse; }
+    public void setStrasse(String strasse) { this.strasse = strasse; }
+
+    public String getPlz() { return plz; }
+    public void setPlz(String plz) { this.plz = plz; }
+
+    public String getOrt() { return ort; }
+    public void setOrt(String ort) { this.ort = ort; }
 
     public String getOauthId() { return oauthId; }
     public void setOauthId(String oauthId) { this.oauthId = oauthId; }

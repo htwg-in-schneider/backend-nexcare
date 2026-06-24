@@ -33,10 +33,12 @@ public class Patient {
 
     @NotBlank(message = "Vorname ist erforderlich")
     @Size(max = 100, message = "Vorname darf maximal 100 Zeichen haben")
+    @Pattern(regexp = "^[\\p{L} .'-]+$", message = "Vorname darf nur Buchstaben, Bindestriche und Leerzeichen enthalten")
     private String vorname;
 
     @NotBlank(message = "Nachname ist erforderlich")
     @Size(max = 100, message = "Nachname darf maximal 100 Zeichen haben")
+    @Pattern(regexp = "^[\\p{L} .'-]+$", message = "Nachname darf nur Buchstaben, Bindestriche und Leerzeichen enthalten")
     private String nachname;
 
     @NotNull(message = "Geburtsdatum ist erforderlich")
@@ -47,15 +49,21 @@ public class Patient {
     @Size(min = 5, max = 30, message = "Versicherungsnummer muss zwischen 5 und 30 Zeichen lang sein")
     private String versicherungsnr;
 
-    @Pattern(regexp = "^[+0-9\\s() -]{0,20}$", message = "Telefonnummer ist ungültig")
+    @Pattern(regexp = "^$|^[+0-9\\s() -]{1,20}$", message = "Telefonnummer ist ungültig")
     private String telefon;
 
     @Email(message = "E-Mail-Adresse ist ungültig")
     @Size(max = 150, message = "E-Mail darf maximal 150 Zeichen haben")
     private String email;
 
-    @Size(max = 250, message = "Adresse darf maximal 250 Zeichen haben")
-    private String adresse;
+    @Size(max = 150, message = "Straße darf maximal 150 Zeichen haben")
+    private String strasse;
+
+    @Pattern(regexp = "^$|^[0-9]{5}$", message = "PLZ muss 5 Ziffern haben")
+    private String plz;
+
+    @Size(max = 100, message = "Ort darf maximal 100 Zeichen haben")
+    private String ort;
 
     @ManyToOne
     @JoinColumn(name = "klinikum_id")
@@ -110,8 +118,14 @@ public class Patient {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getAdresse() { return adresse; }
-    public void setAdresse(String adresse) { this.adresse = adresse; }
+    public String getStrasse() { return strasse; }
+    public void setStrasse(String strasse) { this.strasse = strasse; }
+
+    public String getPlz() { return plz; }
+    public void setPlz(String plz) { this.plz = plz; }
+
+    public String getOrt() { return ort; }
+    public void setOrt(String ort) { this.ort = ort; }
 
     public Klinikum getKlinikum() { return klinikum; }
     public void setKlinikum(Klinikum klinikum) { this.klinikum = klinikum; }

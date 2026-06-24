@@ -93,31 +93,31 @@ public class DataLoader {
         klinikumRepository.save(new Klinikum("Universitätsklinikum Freiburg", "Freiburg"));
 
         Patient maria = build("Maria", "Schmidt", LocalDate.of(1985, 3, 15), "V-2024-001",
-                "+49 170 1234567", "m.schmidt@email.de", "Musterstr. 12, 78462 Konstanz",
+                "+49 170 1234567", "m.schmidt@email.de", "Musterstr. 12", "78462", "Konstanz",
                 konstanz, "3. OG", "Kardiologie", "Station K3", "304", "Bett A",
                 PatientStatus.STATIONAER,
                 new NotfallKontakt("Hans Schmidt", "Ehepartner", "+49 170 7654321"));
 
         Patient thomas = build("Thomas", "Weber", LocalDate.of(1972, 7, 22), "V-2024-002",
-                "+49 171 2345678", "t.weber@email.de", "Seestr. 8, 78464 Konstanz",
+                "+49 171 2345678", "t.weber@email.de", "Seestr. 8", "78464", "Konstanz",
                 konstanz, "2. OG", "Innere Medizin", "Station I2", "212", "Bett B",
                 PatientStatus.STATIONAER,
                 new NotfallKontakt("Sabine Weber", "Ehepartnerin", "+49 171 8765432"));
 
         Patient anna = build("Anna", "Hoffmann", LocalDate.of(1990, 11, 3), "V-2024-003",
-                "+49 172 3456789", "a.hoffmann@email.de", "Bahnhofstr. 22, 78462 Konstanz",
+                "+49 172 3456789", "a.hoffmann@email.de", "Bahnhofstr. 22", "78462", "Konstanz",
                 konstanz, "EG", "Ambulanz", "–", "–", "–",
                 PatientStatus.AMBULANT,
                 new NotfallKontakt("Klaus Hoffmann", "Vater", "+49 172 9876543"));
 
         Patient peter = build("Peter", "Braun", LocalDate.of(1965, 5, 8), "V-2024-004",
-                "+49 173 4567890", "p.braun@email.de", "Rheinsteig 5, 78462 Konstanz",
+                "+49 173 4567890", "p.braun@email.de", "Rheinsteig 5", "78462", "Konstanz",
                 konstanz, "4. OG", "Chirurgie", "Station C4", "418", "Bett A",
                 PatientStatus.STATIONAER,
                 new NotfallKontakt("Maria Braun", "Tochter", "+49 173 0987654"));
 
         Patient lisa = build("Lisa", "Krause", LocalDate.of(1998, 9, 17), "V-2024-005",
-                "+49 174 5678901", "l.krause@email.de", "Marktplatz 3, 78462 Konstanz",
+                "+49 174 5678901", "l.krause@email.de", "Marktplatz 3", "78462", "Konstanz",
                 singen, "EG", "Ambulanz", "–", "–", "–",
                 PatientStatus.AMBULANT,
                 new NotfallKontakt("Julia Krause", "Schwester", "+49 174 1098765"));
@@ -455,7 +455,8 @@ public class DataLoader {
     }
 
     private static Patient build(String vorname, String nachname, LocalDate geb, String vNr,
-                                 String tel, String email, String adresse, Klinikum klinikum,
+                                 String tel, String email, String strasse, String plz, String ort,
+                                 Klinikum klinikum,
                                  String etage, String abteilung, String station, String zimmer,
                                  String bett, PatientStatus status, NotfallKontakt notfall) {
         Patient p = new Patient();
@@ -465,7 +466,9 @@ public class DataLoader {
         p.setVersicherungsnr(vNr);
         p.setTelefon(tel);
         p.setEmail(email);
-        p.setAdresse(adresse);
+        p.setStrasse(strasse);
+        p.setPlz(plz);
+        p.setOrt(ort);
         p.setKlinikum(klinikum);
         p.setEtage(etage);
         p.setAbteilung(abteilung);

@@ -1,6 +1,9 @@
 package de.htwg.in.nexcare.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,15 +17,22 @@ public class PatientNachricht {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
+    @NotBlank(message = "Titel ist erforderlich")
+    @Size(max = 200, message = "Titel darf maximal 200 Zeichen haben")
     @Column(nullable = false)
     private String titel;
 
+    @NotBlank(message = "Inhalt ist erforderlich")
+    @Size(max = 2000, message = "Inhalt darf maximal 2000 Zeichen haben")
     @Column(nullable = false, length = 2000)
     private String inhalt;
 
+    @NotBlank(message = "Typ ist erforderlich")
+    @Size(max = 50, message = "Typ darf maximal 50 Zeichen haben")
     @Column(nullable = false)
     private String typ; // WILLKOMMEN, AUFNAHME, BETT, MEDIKAMENT, ALLGEMEIN
 
+    @NotNull(message = "Erstellungsdatum ist erforderlich")
     @Column(nullable = false)
     private LocalDateTime erstelltAm;
 

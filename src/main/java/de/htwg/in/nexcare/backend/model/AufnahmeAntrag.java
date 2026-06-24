@@ -2,6 +2,7 @@ package de.htwg.in.nexcare.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ public class AufnahmeAntrag {
     @Size(max = 150)
     private String patientName;
 
+    @Email(message = "E-Mail-Adresse ist ungültig")
     @Size(max = 150)
     private String patientEmail;
 

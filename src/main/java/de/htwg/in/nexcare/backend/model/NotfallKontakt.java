@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 @Embeddable
 public class NotfallKontakt {
     @Size(max = 100, message = "Name darf maximal 100 Zeichen haben")
+    @Pattern(regexp = "^$|^[\\p{L} .'-]+$", message = "Name darf nur Buchstaben, Bindestriche und Leerzeichen enthalten")
     private String name;
 
     @Size(max = 100, message = "Beziehung darf maximal 100 Zeichen haben")

@@ -57,7 +57,9 @@ public class UserController {
             if (details.getName() != null && !details.getName().isBlank()) {
                 user.setName(details.getName());
             }
-            user.setAdresse(details.getAdresse());
+            user.setStrasse(details.getStrasse());
+            user.setPlz(details.getPlz());
+            user.setOrt(details.getOrt());
             if (details.getRole() != null) {
                 user.setRole(details.getRole());
             }
