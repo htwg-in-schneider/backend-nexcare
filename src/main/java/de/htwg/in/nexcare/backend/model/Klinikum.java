@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,9 +23,11 @@ public class Klinikum {
     private Long id;
 
     @NotBlank(message = "Name ist erforderlich")
+    @Size(max = 150, message = "Name darf maximal 150 Zeichen haben")
     private String name;
 
     @NotBlank(message = "Ort ist erforderlich")
+    @Size(max = 150, message = "Ort darf maximal 150 Zeichen haben")
     private String ort;
 
     @OneToMany(mappedBy = "klinikum")
