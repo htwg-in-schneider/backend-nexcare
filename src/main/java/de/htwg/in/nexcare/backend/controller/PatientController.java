@@ -146,8 +146,11 @@ public class PatientController {
         patient.setTelefon(details.getTelefon());
         patient.setEmail(details.getEmail());
         patient.setStrasse(details.getStrasse());
+        patient.setHausnummer(details.getHausnummer());
+        patient.setAdresszusatz(details.getAdresszusatz());
         patient.setPlz(details.getPlz());
         patient.setOrt(details.getOrt());
+        patient.setLand(details.getLand());
         patient.setKlinikum(details.getKlinikum());
         patient.setEtage(details.getEtage());
         patient.setAbteilung(details.getAbteilung());

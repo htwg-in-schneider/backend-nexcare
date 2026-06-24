@@ -54,8 +54,11 @@ public class ProfileController {
                     patient.setEmail(details.getEmail());
                     patient.setTelefon(details.getTelefon());
                     patient.setStrasse(details.getStrasse());
+                    patient.setHausnummer(details.getHausnummer());
+                    patient.setAdresszusatz(details.getAdresszusatz());
                     patient.setPlz(details.getPlz());
                     patient.setOrt(details.getOrt());
+                    patient.setLand(details.getLand());
                     Patient saved = patientRepository.save(patient);
                     LOG.info("Patient {} updated own profile", saved.getId());
                     return ResponseEntity.ok(saved);

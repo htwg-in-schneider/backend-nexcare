@@ -59,11 +59,20 @@ public class Patient {
     @Size(max = 150, message = "Straße darf maximal 150 Zeichen haben")
     private String strasse;
 
+    @Size(max = 10, message = "Hausnummer darf maximal 10 Zeichen haben")
+    private String hausnummer;
+
+    @Size(max = 100, message = "Adresszusatz darf maximal 100 Zeichen haben")
+    private String adresszusatz;
+
     @Pattern(regexp = "^$|^[0-9]{5}$", message = "PLZ muss 5 Ziffern haben")
     private String plz;
 
     @Size(max = 100, message = "Ort darf maximal 100 Zeichen haben")
     private String ort;
+
+    @Size(max = 50, message = "Land darf maximal 50 Zeichen haben")
+    private String land;
 
     @ManyToOne
     @JoinColumn(name = "klinikum_id")
@@ -121,11 +130,20 @@ public class Patient {
     public String getStrasse() { return strasse; }
     public void setStrasse(String strasse) { this.strasse = strasse; }
 
+    public String getHausnummer() { return hausnummer; }
+    public void setHausnummer(String hausnummer) { this.hausnummer = hausnummer; }
+
+    public String getAdresszusatz() { return adresszusatz; }
+    public void setAdresszusatz(String adresszusatz) { this.adresszusatz = adresszusatz; }
+
     public String getPlz() { return plz; }
     public void setPlz(String plz) { this.plz = plz; }
 
     public String getOrt() { return ort; }
     public void setOrt(String ort) { this.ort = ort; }
+
+    public String getLand() { return land; }
+    public void setLand(String land) { this.land = land; }
 
     public Klinikum getKlinikum() { return klinikum; }
     public void setKlinikum(Klinikum klinikum) { this.klinikum = klinikum; }
