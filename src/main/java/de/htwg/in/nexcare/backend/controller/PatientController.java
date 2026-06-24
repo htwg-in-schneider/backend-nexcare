@@ -86,6 +86,9 @@ public class PatientController {
         if (!securityService.isStaff(jwt)) return ResponseEntity.status(403).build();
 
         if (patient.getId() != null) patient.setId(null);
+        if (patient.getGeburtsdatum() != null && patient.getGeburtsdatum().getYear() < 1900) {
+            return ResponseEntity.badRequest().build();
+        }
         if (patient.getAufnahmeDatum() == null) patient.setAufnahmeDatum(java.time.LocalDate.now());
 
         Patient saved = patientRepository.save(patient);

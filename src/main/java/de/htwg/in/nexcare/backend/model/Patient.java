@@ -47,7 +47,7 @@ public class Patient {
     @Size(min = 5, max = 30, message = "Versicherungsnummer muss zwischen 5 und 30 Zeichen lang sein")
     private String versicherungsnr;
 
-    @Pattern(regexp = "^[+0-9\\s()\\-]{0,20}$", message = "Telefonnummer ist ungültig")
+    @Pattern(regexp = "^[+0-9\\s() -]{0,20}$", message = "Telefonnummer ist ungültig")
     private String telefon;
 
     @Email(message = "E-Mail-Adresse ist ungültig")
