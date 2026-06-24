@@ -46,7 +46,7 @@ public class Patient {
     private LocalDate geburtsdatum;
 
     @NotBlank(message = "Versicherungsnummer ist erforderlich")
-    @Size(min = 5, max = 30, message = "Versicherungsnummer muss zwischen 5 und 30 Zeichen lang sein")
+    @Pattern(regexp = "^V-\\d{4}-\\d{3,6}$", message = "Format: V-JJJJ-NNN (z.B. V-2024-001)")
     private String versicherungsnr;
 
     @Pattern(regexp = "^$|^[+0-9\\s() -]{1,20}$", message = "Telefonnummer ist ungültig")
